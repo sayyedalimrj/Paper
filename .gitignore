@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ipynb_checkpoints/
+
+# Data (large/raw downloads are reproducible via src/data_download.py)
+data/raw/*.xls
+data/raw/*.xlsx
+data/raw/*.csv
+
+# Keep provenance + .gitkeep
+!data/raw/provenance.json
+!data/**/.gitkeep
+
+# Model binaries can be large
+outputs/models/*.joblib
+outputs/models/*.pkl
+
+# OS
+.DS_Store
+
+# Large cached EPD dataset (reproducible via src/train_carbon_model.py)
+data/external/*.csv
+!data/external/.gitkeep

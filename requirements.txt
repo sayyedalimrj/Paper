@@ -1,0 +1,46 @@
+# =============================================================================
+# AI-Enabled Concrete Performance Passports for OpenBIM
+# Reproducible dependency list
+# -----------------------------------------------------------------------------
+# Pinned to compatible major/minor ranges so the project remains runnable in
+# Google Colab and in a local Python 3.10+ environment. Versions are kept
+# permissive (>=) to avoid Colab pre-installed-package conflicts; a frozen
+# lockfile can be produced later with `pip freeze`.
+# =============================================================================
+
+# --- Core scientific stack ---------------------------------------------------
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+
+# --- Machine learning --------------------------------------------------------
+scikit-learn>=1.3
+xgboost>=2.0          # gradient boosting; falls back to sklearn HGB if missing
+joblib>=1.3           # model persistence
+
+# --- Explainability ----------------------------------------------------------
+shap>=0.44            # SHAP feature attributions (optional, has fallback)
+
+# --- Visualisation -----------------------------------------------------------
+matplotlib>=3.7
+seaborn>=0.12
+
+# --- Data access -------------------------------------------------------------
+requests>=2.31        # dataset downloads
+openpyxl>=3.1         # read UCI .xls/.xlsx concrete dataset
+xlrd>=2.0             # legacy .xls support
+
+# --- OpenBIM / IFC / IDS (optional, graceful fallback) -----------------------
+# ifcopenshell is NOT pip-installable on all platforms; the project provides a
+# conceptual mapping fallback if it is unavailable. Install manually if needed:
+#   pip install ifcopenshell
+lxml>=4.9             # used to emit IDS-style XML requirement files
+
+# --- Documentation / chapter export ------------------------------------------
+jinja2>=3.1           # passport + report templating
+tabulate>=0.9         # markdown tables
+pyyaml>=6.0           # config / schema serialisation
+
+# --- Notebook tooling --------------------------------------------------------
+jupyter>=1.0
+ipykernel>=6.25
