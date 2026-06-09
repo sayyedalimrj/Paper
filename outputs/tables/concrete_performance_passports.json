@@ -1,0 +1,32 @@
+{
+  "schema_version": "2.0",
+  "status": "SCHEMA ONLY - demonstration passport records pending one offline regeneration run",
+  "disclaimer": "Demonstration passport records were NOT generated in the emergency finalization pass (no code executed, because the pipeline/finalizer repeatedly hung in the interactive environment). The field definitions below are final. BIM element context (IDs, types, required strengths, volumes) is ILLUSTRATIVE (evidence level D). Mix & measured strength are dataset-derived (UCI, Yeh 1998; level B). Predicted strength/uncertainty are model-derived (level C). Carbon class uses ICE factors + a public EPD benchmark (level B). No legal/regulatory compliance is claimed; Pset_ConcretePerformancePassport is a PROPOSED (non-official) IFC property set. No results are fabricated.",
+  "reproduce_command": "USE_CACHED_ONLY=1 python -m src.finalize_lightweight_outputs",
+  "uncertainty_method": "Random Forest ensemble spread (std across trees); approximate, not calibrated",
+  "evidence_levels": {
+    "A": "measured project/lab data",
+    "B": "verified public dataset or EPD-derived benchmark",
+    "C": "ML prediction from public data",
+    "D": "illustrative, incomplete, or missing data"
+  },
+  "blocks_and_fields": {
+    "bim_element": ["element_id", "element_type", "required_strength_mpa", "material_class", "volume_m3", "ifc_element_type"],
+    "mix_and_test": ["cement", "water", "blast_furnace_slag", "fly_ash", "silica_fume", "coarse_aggregate", "fine_aggregate", "superplasticizer", "age_days", "water_binder_ratio", "measured_strength_mpa"],
+    "ml_outputs": ["predicted_strength_mpa", "prediction_uncertainty_mpa", "relative_uncertainty", "model_confidence_or_uncertainty", "prediction_interval_lower", "prediction_interval_upper", "uncertainty_method", "risk_class", "risk_decision_rule", "top_features", "model_name"],
+    "sustainability": ["gwp_estimate_kgco2e_per_m3", "carbon_class", "carbon_benchmark_group", "epd_benchmark_percentile", "durability_indicator_status"],
+    "decision": ["qa_qc_decision", "passport_readiness_score", "ids_readiness_status", "decision_support_level"],
+    "evidence": ["data_source_type", "data_source_reference", "evidence_level", "auditability_note", "dpp_cpr_relevance_note"],
+    "openbim_refs": ["ifc_material", "standard_pset", "custom_pset", "ids_requirement_ids"]
+  },
+  "enumerations": {
+    "element_type": ["beam", "column", "slab", "wall", "footing", "pile", "bridge_deck", "pier"],
+    "risk_class": ["Low", "Medium", "High", "Unknown"],
+    "qa_qc_decision": ["Accept", "Review", "Hold", "Retest", "Missing Data"],
+    "ids_readiness_status": ["Pass", "Partial", "Fail"],
+    "carbon_class": ["Low", "Typical", "High", "Not assessed"],
+    "evidence_level": ["A", "B", "C", "D"]
+  },
+  "note": "The authoritative machine-readable field/enum/type definitions live in src/passport_schema.py (function json_schema()).",
+  "passports": []
+}

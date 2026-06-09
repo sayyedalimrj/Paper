@@ -1,0 +1,14 @@
+requirement_id,requirement_name,target_object_or_material,required_property,expected_type_or_value,importance,rationale,related_passport_field
+IDS-CPP-01,Concrete material assigned,IfcBeam/IfcColumn/IfcSlab/IfcWall/IfcFooting/IfcPile,IfcMaterial.Name,"non-empty string (concrete class, e.g. C30/37)",required,Every concrete element must declare its material/class,material_class
+IDS-CPP-02,Specified compressive strength present,concrete IfcElement,Pset_MaterialConcrete.CompressiveStrength,>0 Pa,required,Required strength must be available to evaluate QA,required_strength_mpa
+IDS-CPP-03,Mix constituents declared,IfcMaterialConstituentSet,"IfcMaterialConstituent (Cement, Water, SCM, Aggregate)",constituents present,optional,Supports sustainability + traceability,cement|water|scm|aggregate
+IDS-CPP-04,Predicted strength present,concrete IfcElement,Pset_ConcretePerformancePassport.PredictedCompressiveStrength,>0 Pa,required,Core ML output of the passport,predicted_strength_mpa
+IDS-CPP-05,Risk class declared,concrete IfcElement,Pset_ConcretePerformancePassport.RiskClass,"enum {Low,Medium,High}",required,Drives prioritisation/decision,risk_class
+IDS-CPP-06,QA/QC decision declared,concrete IfcElement,Pset_ConcretePerformancePassport.QADecision,"enum {Accept,Review,Hold,Retest,Missing Data}",required,The actionable QA outcome,qa_qc_decision
+IDS-CPP-07,Prediction uncertainty present,concrete IfcElement,Pset_ConcretePerformancePassport.PredictionUncertainty,>=0 Pa,optional,Quantifies confidence,prediction_uncertainty_mpa
+IDS-CPP-08,Carbon class declared,concrete IfcElement,Pset_ConcretePerformancePassport.CarbonClass,"enum {Low,Typical,High}",optional,Sustainability decision support,carbon_class
+IDS-CPP-09,Embodied carbon value present,concrete IfcElement,Pset_ConcretePerformancePassport.GWP_A1A3,>0 kgCO2e/m3,optional,Enables benchmarking,gwp_estimate_kgco2e_per_m3
+IDS-CPP-10,Model reference present,concrete IfcElement,Pset_ConcretePerformancePassport.ModelReference,non-empty string,optional,Traceability/auditability of the prediction,model_name
+IDS-CPP-11,Evidence level declared,concrete IfcElement,Pset_ConcretePerformancePassport.EvidenceLevel,"enum {A,B,C,D}",required,Records the evidence basis (measured/public/ML/illustrative) for auditability,evidence_level
+IDS-CPP-12,Prediction interval / uncertainty present,concrete IfcElement,Pset_ConcretePerformancePassport.PredictionInterval,two bounds in Pa (approx),optional,Communicates confidence around the prediction,prediction_interval_lower/upper
+IDS-CPP-13,Passport readiness score present,concrete IfcElement,Pset_ConcretePerformancePassport.ReadinessScore,0-100,optional,Quantifies completeness/decision-readiness of the record,passport_readiness_score
