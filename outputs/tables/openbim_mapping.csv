@@ -1,0 +1,24 @@
+passport_field,description,suggested_ifc_entity_or_pset,example_ifc_concept,required_status,data_type,use_in_qaqc_or_sustainability
+element_id,Unique element identifier,IfcRoot.GlobalId / Tag,IfcColumn.GlobalId,Required,IfcGloballyUniqueId/string,QA/QC
+element_type,Structural element type,IfcElement subtype,"IfcBeam, IfcColumn, IfcSlab, IfcWall, IfcFooting, IfcPile",Required,enum,QA/QC
+material_class,Concrete class / grade,IfcMaterial.Name + IfcClassificationReference,IfcMaterial(Name='C30/37'),Required,IfcLabel/string,QA/QC
+required_strength_mpa,Specified characteristic strength,Pset_ConcreteElementGeneral / Pset_MaterialConcrete,Pset_MaterialConcrete.CompressiveStrength,Required,IfcPressureMeasure (Pa),QA/QC
+measured_strength_mpa,Lab/test compressive strength,Pset_MaterialConcrete (property history),Pset_MaterialConcrete.CompressiveStrength,Optional,IfcPressureMeasure (Pa),QA/QC
+cement|water|scm|aggregate|admixture,Mix-design constituents (kg/m3),IfcMaterialConstituentSet / IfcMaterialConstituent,IfcMaterialConstituent(Name='Cement'),Optional,IfcMassMeasure per volume,QA/QC + sustainability
+water_binder_ratio,Water/binder ratio,Custom Pset,Pset_ConcretePerformancePassport.WaterBinderRatio,Optional,IfcRatioMeasure,QA/QC
+age_days,Age at test/assessment,Custom Pset / Pset_ConcreteElementGeneral,Pset_ConcretePerformancePassport.AgeAtAssessment,Optional,IfcTimeMeasure (days),QA/QC
+predicted_strength_mpa,ML-predicted compressive strength,Custom Pset (proposed),Pset_ConcretePerformancePassport.PredictedCompressiveStrength,Required,IfcPressureMeasure (Pa),QA/QC
+prediction_uncertainty_mpa,Prediction uncertainty (1 sigma),Custom Pset (proposed),Pset_ConcretePerformancePassport.PredictionUncertainty,Optional,IfcPressureMeasure (Pa),QA/QC
+risk_class,Risk class (Low/Medium/High),Custom Pset (proposed),Pset_ConcretePerformancePassport.RiskClass,Required,IfcLabel/enum,QA/QC
+top_features,Explanation: top contributing features,Custom Pset (proposed),Pset_ConcretePerformancePassport.PredictionExplanation,Optional,IfcText,QA/QC
+model_name,Predictive model identifier,Custom Pset (proposed),Pset_ConcretePerformancePassport.ModelReference,Optional,IfcLabel,QA/QC
+gwp_estimate_kgco2e_per_m3,Embodied carbon (A1-A3 GWP),IfcMaterial + EnvironmentalImpactValues / Custom Pset,Pset_ConcretePerformancePassport.GWP_A1A3,Optional,IfcMassMeasure (kgCO2e/m3),Sustainability
+carbon_class,Carbon class (Low/Typical/High),Custom Pset (proposed),Pset_ConcretePerformancePassport.CarbonClass,Optional,IfcLabel/enum,Sustainability
+epd_benchmark_percentile,EPD benchmark percentile,Custom Pset (proposed),Pset_ConcretePerformancePassport.EPDBenchmarkPercentile,Optional,IfcRatioMeasure (%),Sustainability
+qa_decision,QA/QC decision,Custom Pset (proposed),Pset_ConcretePerformancePassport.QADecision,Required,IfcLabel/enum,QA/QC
+evidence_level,Evidence level (A-D) of the record,Custom Pset (proposed),Pset_ConcretePerformancePassport.EvidenceLevel,Required,IfcLabel/enum,QA/QC + provenance
+data_source_type,Provenance of the decision value,Custom Pset (proposed),Pset_ConcretePerformancePassport.DataSourceType,Optional,IfcLabel/enum,QA/QC + provenance
+prediction_interval,Approx. 95% prediction interval (bounds),Custom Pset (proposed),Pset_ConcretePerformancePassport.PredictionInterval,Optional,IfcPressureMeasure (Pa) bounds,QA/QC
+passport_readiness_score,Completeness score (0-100),Custom Pset (proposed),Pset_ConcretePerformancePassport.ReadinessScore,Optional,IfcRatioMeasure,QA/QC
+durability_indicator_status,Durability layer status,Custom Pset (proposed),Pset_ConcretePerformancePassport.DurabilityStatus,Optional,IfcLabel/enum,Durability
+volume_m3,Element concrete volume,IfcElementQuantity,Qto_ConcreteElementBaseQuantities.NetVolume,Optional,IfcVolumeMeasure (m3),Sustainability
