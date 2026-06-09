@@ -1,0 +1,11 @@
+limitation,description,future_work
+Strength dataset scope,UCI dataset uses 8 mix-design inputs only (no cement chemistry, gradation, or curing regime beyond age).,Incorporate richer mix/curing/chemistry datasets; transfer learning across labs.
+UCI dataset age and size,The benchmark dataset (Yeh 1998; 1030 rows) is old and modest in size; may not reflect modern SCM-rich mixes.,Augment with recent multi-source datasets and validate temporal/geographic transfer.
+Durability not modelled,No clean complete public durability dataset cached; durability left as a schema extension.,Integrate a vetted chloride/carbonation dataset when available; add a durability model.
+Carbon estimate,ICE per-constituent factors are generic cradle-to-gate; EPD benchmark is U.S.-centric (regional bias).,Use product/region-specific verified EPDs; expand benchmarks to other regions.
+BIM context illustrative,Element IDs/types/required strengths/volumes are demonstration data (evidence level D), not a real project.,Apply to a real IFC project model with project-specific requirements.
+Approximate uncertainty,"Uncertainty via Random Forest ensemble spread / residual std; approximate, not calibrated intervals.",Adopt conformal prediction or quantile regression for calibrated bounds.
+IFC/IDS specification-level,Custom Pset + IDS are conceptual; not certified against commercial IDS checkers or real IFC files.,Author full IFC; validate IDS in BIMcollab/IfcOpenShell/IDS tooling on real models.
+No regulatory compliance claim,Alignment with DPP/CPR direction is conceptual only; no legal/regulatory compliance is claimed.,Track CPR DPP technical specifications as they finalise; map fields accordingly.
+No real project validation,Demonstration uses public/illustrative data only; no real construction project validated the workflow.,Validate on real project BIM/QA datasets and laboratory information management systems.
+Execution constraints,"Full pipeline and finalizer hung in the interactive environment; computed artefacts pending one offline run.",Run USE_CACHED_ONLY=1 finalizer locally or in Colab to regenerate model/passports/figures.

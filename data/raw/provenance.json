@@ -1,0 +1,22 @@
+{
+  "dataset": "UCI Concrete Compressive Strength (Yeh, 1998)",
+  "license": "CC BY 4.0 (UCI Machine Learning Repository)",
+  "citation": "Yeh, I-C. (1998). Modeling of strength of high-performance concrete using artificial neural networks. Cement and Concrete Research, 28(12), 1797-1808.",
+  "downloaded_utc": "2026-06-09T19:07:21Z",
+  "rows": 1030,
+  "columns": [
+    "cement",
+    "blast_furnace_slag",
+    "fly_ash",
+    "water",
+    "superplasticizer",
+    "coarse_aggregate",
+    "fine_aggregate",
+    "age",
+    "compressive_strength"
+  ],
+  "source_attempts": [
+    "https://archive.ics.uci.edu/ml/machine-learning-databases/concrete/compressive/Concrete_Data.xls",
+    "OpenML:Concrete_Data"
+  ]
+}
