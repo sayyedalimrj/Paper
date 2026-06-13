@@ -334,7 +334,23 @@ def run() -> Dict:
     summary = build_benchmarks(df)
     plot_distribution(df)
     model_metrics = train_gwp_model(df)
-    return {"epd": df, "summary": summary, "source_note": note, "gwp_model": model_metrics}
+    is_synthetic = "SYNTHETIC" in note.upper()
+    # Persist a provenance marker so downstream steps (e.g. the notebook) can tell
+    # whether the carbon benchmark used the real EPD dataset or a synthetic stand-in.
+    utils.save_json(
+        {
+            "source_note": note,
+            "is_synthetic": is_synthetic,
+            "n_rows": int(len(df)),
+            "generated_utc": utils.utc_timestamp(),
+        },
+        config.TABLES_DIR / "carbon_source.json",
+    )
+    if is_synthetic:
+        LOG.warning("Carbon benchmark built from SYNTHETIC data — real EPD download "
+                    "was unavailable. Re-run when online to use the real dataset.")
+    return {"epd": df, "summary": summary, "source_note": note,
+            "gwp_model": model_metrics, "is_synthetic": is_synthetic}
 
 
 if __name__ == "__main__":
