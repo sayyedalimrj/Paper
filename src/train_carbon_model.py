@@ -192,7 +192,11 @@ def plot_distribution(df: pd.DataFrame) -> None:
     ax1.set_title(f"Concrete EPD GWP distribution (n={len(df):,})")
     order = [l for l in PSI_LABELS if l in set(df["strength_class_psi"].astype(str))]
     data = [df[df["strength_class_psi"].astype(str) == l]["gwp_kgco2e_per_m3"] for l in order]
-    ax2.boxplot(data, labels=order, showfliers=False)
+    # matplotlib renamed boxplot's ``labels`` kwarg to ``tick_labels`` in 3.9;
+    # set tick labels manually so the figure renders on any version.
+    ax2.boxplot(data, showfliers=False)
+    ax2.set_xticks(range(1, len(order) + 1))
+    ax2.set_xticklabels(order)
     ax2.set_xlabel("Strength class (psi)"); ax2.set_ylabel("GWP (kg CO$_2$e / m$^3$)")
     ax2.set_title("GWP by strength class"); plt.setp(ax2.get_xticklabels(), rotation=30, ha="right")
     fig.tight_layout(); fig.savefig(config.FIGURES_DIR / "carbon_distribution.png",

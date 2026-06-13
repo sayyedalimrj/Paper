@@ -1,0 +1,9 @@
+feature,importance,method
+age,0.8616359988408963,Permutation importance
+cement,0.43468537473055874,Permutation importance
+water,0.24302008455118332,Permutation importance
+blast_furnace_slag,0.15648717724770217,Permutation importance
+superplasticizer,0.06037589967974925,Permutation importance
+fine_aggregate,0.053663495258016336,Permutation importance
+coarse_aggregate,0.01233225525106173,Permutation importance
+fly_ash,0.0013009983133921653,Permutation importance
