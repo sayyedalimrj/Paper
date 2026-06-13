@@ -1,0 +1,81 @@
+{
+  "bim_element": {
+    "element_id": "EL-PIE-016",
+    "element_type": "pier",
+    "required_strength_mpa": 40.0,
+    "material_class": "C40/50",
+    "volume_m3": 16.8,
+    "ifc_element_type": "IfcColumn (bridge pier)",
+    "provenance": "illustrative_demonstration"
+  },
+  "mix_and_test": {
+    "cement": 228.0,
+    "water": 185.7,
+    "blast_furnace_slag": 342.1,
+    "fly_ash": 0.0,
+    "silica_fume": null,
+    "coarse_aggregate": 955.8,
+    "fine_aggregate": 674.3,
+    "superplasticizer": 0.0,
+    "age_days": 7.0,
+    "water_binder_ratio": 0.3257,
+    "measured_strength_mpa": 21.917063088,
+    "provenance": "dataset_derived (UCI, Yeh 1998)"
+  },
+  "ml_outputs": {
+    "predicted_strength_mpa": 23.649354934692383,
+    "prediction_uncertainty_mpa": 4.109250683706546,
+    "relative_uncertainty": 0.17375741093379624,
+    "model_confidence_or_uncertainty": "High",
+    "prediction_interval_lower": 15.595223594627553,
+    "prediction_interval_upper": 31.70348627475721,
+    "uncertainty_method": "Random Forest ensemble spread (std across trees); approximate, not calibrated",
+    "risk_class": "High",
+    "risk_decision_rule": "Accept if predicted >= 1.05*required; Review if required <= predicted < 1.05*required; Hold if 0.95*required <= predicted < required; Retest if predicted < 0.95*required or relative uncertainty > 0.20; Missing Data if required or predicted is unavailable.",
+    "top_features": [
+      "age",
+      "cement",
+      "water"
+    ],
+    "model_name": "XGBoost",
+    "provenance": "model_derived (ML prediction from public data)"
+  },
+  "sustainability": {
+    "gwp_estimate_kgco2e_per_m3": 225.84677,
+    "carbon_class": "Low",
+    "carbon_benchmark_group": "3000-3999",
+    "epd_benchmark_percentile": 8.3,
+    "durability_indicator_status": "future extension",
+    "provenance": "ICE factors (estimate) + EPD benchmark (Broyles et al. 2024)"
+  },
+  "decision": {
+    "qa_qc_decision": "Retest",
+    "passport_readiness_score": 100.0,
+    "ids_readiness_status": "Pass",
+    "decision_support_level": "prescriptive-lite",
+    "rationale": "Predicted 23.6 MPa vs required 40.0 MPa (margin -40.9%); approx. 95% PI [15.6, 31.7] MPa; uncertainty band=High.",
+    "provenance": "rule_based"
+  },
+  "evidence": {
+    "data_source_type": "predicted",
+    "data_source_reference": "Mix & measured strength: UCI Concrete dataset (Yeh, 1998); prediction: ML model on public data; carbon benchmark: compiled U.S. EPD dataset (Broyles, Gevaudan & Brown, 2024); carbon factors: ICE (Hammond & Jones, 2008); BIM element context: illustrative demonstration.",
+    "evidence_level": "C",
+    "evidence_level_meaning": "ML prediction from public data",
+    "auditability_note": "Mixed evidence: measured strength = level B (public dataset); predicted strength = level C (ML from public data); carbon class = level B (EPD-benchmarked); element ID/type/required strength/volume = level D (illustrative). Decision basis = predicted strength (level C).",
+    "dpp_cpr_relevance_note": "Aligned with the broader direction of digital product/performance information management (e.g., EU CPR Digital Product Passport); this is NOT a claim of legal/regulatory compliance."
+  },
+  "openbim_refs": {
+    "ifc_material": "IfcMaterial / IfcMaterialConstituentSet",
+    "standard_pset": "Pset_MaterialConcrete; Pset_ConcreteElementGeneral",
+    "custom_pset": "Pset_ConcretePerformancePassport (proposed, NOT an official IFC Pset)",
+    "ids_requirement_ids": [
+      "IDS-CPP-01",
+      "IDS-CPP-02",
+      "IDS-CPP-04",
+      "IDS-CPP-05",
+      "IDS-CPP-06"
+    ],
+    "provenance": "specification_level (conceptual unless validated on real IFC)"
+  },
+  "schema_version": "2.0"
+}

@@ -1,5 +1,6 @@
-model,r2,rmse,mae,mape,cv_r2_mean,cv_r2_std,is_best,status
-LinearRegression,,,,,,,,PENDING - metrics not generated in emergency finalization pass (no code executed)
-RandomForest,,,,,,,,PENDING - reproduce via: USE_CACHED_ONLY=1 python -m src.finalize_lightweight_outputs
-ExtraTrees,,,,,,,,PENDING - reproduce via: USE_CACHED_ONLY=1 python -m src.finalize_lightweight_outputs
-GradientBoosting,,,,,,,,PENDING - reproduce via: USE_CACHED_ONLY=1 python -m src.finalize_lightweight_outputs
+model,r2,rmse,mae,mape,cv_r2_mean,cv_r2_std,is_best
+XGBoost,0.9233,4.4453,3.1374,10.145,0.9336,0.0063,True
+ExtraTrees,0.89,5.323,3.4114,10.5988,0.9171,0.0146,False
+RandomForest,0.8808,5.5415,3.7867,12.3729,0.9067,0.0159,False
+GradientBoosting,0.8808,5.5422,4.1006,13.071,0.9021,0.0141,False
+LinearRegression,0.6275,9.7967,7.7454,29.2763,0.6006,0.0478,False
