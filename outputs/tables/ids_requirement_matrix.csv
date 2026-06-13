@@ -4,7 +4,7 @@ IDS-CPP-02,Specified compressive strength present,concrete IfcElement,Pset_Mater
 IDS-CPP-03,Mix constituents declared,IfcMaterialConstituentSet,"IfcMaterialConstituent (Cement, Water, SCM, Aggregate)",constituents present,optional,Supports sustainability + traceability,cement|water|scm|aggregate
 IDS-CPP-04,Predicted strength present,concrete IfcElement,Pset_ConcretePerformancePassport.PredictedCompressiveStrength,>0 Pa,required,Core ML output of the passport,predicted_strength_mpa
 IDS-CPP-05,Risk class declared,concrete IfcElement,Pset_ConcretePerformancePassport.RiskClass,"enum {Low,Medium,High}",required,Drives prioritisation/decision,risk_class
-IDS-CPP-06,QA/QC decision declared,concrete IfcElement,Pset_ConcretePerformancePassport.QADecision,"enum {Accept,Review,Hold,Retest,Missing Data}",required,The actionable QA outcome,qa_qc_decision
+IDS-CPP-06,QA/QC decision declared,concrete IfcElement,Pset_ConcretePerformancePassport.QADecision,"enum {Accept,Review,Hold/Retest,Missing/Insufficient}",required,The actionable QA outcome,qa_decision
 IDS-CPP-07,Prediction uncertainty present,concrete IfcElement,Pset_ConcretePerformancePassport.PredictionUncertainty,>=0 Pa,optional,Quantifies confidence,prediction_uncertainty_mpa
 IDS-CPP-08,Carbon class declared,concrete IfcElement,Pset_ConcretePerformancePassport.CarbonClass,"enum {Low,Typical,High}",optional,Sustainability decision support,carbon_class
 IDS-CPP-09,Embodied carbon value present,concrete IfcElement,Pset_ConcretePerformancePassport.GWP_A1A3,>0 kgCO2e/m3,optional,Enables benchmarking,gwp_estimate_kgco2e_per_m3

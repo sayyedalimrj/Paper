@@ -7,28 +7,35 @@ This repository accompanies a Springer-style book chapter for the edited volume
 
 ---
 
-## Current status (research-workflow draft)
+## Current status
 
 - The **scientific framing, literature review (2025–2026 updated), data-management
-  schema, OpenBIM/IDS mapping, chapter draft, and source code** are substantially
-  developed and committed.
-- **Computed artefacts** (trained model `.pkl`, real passport demonstration
-  records, figures, model metrics) are **pending one offline regeneration run**.
-  They were not generated in the latest pass because the full pipeline and the
-  lightweight finalizer exceeded interactive execution constraints (hung). This is
-  documented honestly in `outputs/final_report.md`,
-  `outputs/scientific_acceptance_checklist.md`, and `outputs/test_report.md`.
-- **No experimental results are claimed** until the offline finalizer and offline
-  tests are run. No metrics or passport records are fabricated.
+  schema, OpenBIM/IDS mapping, chapter draft, and source code** are developed and
+  committed.
+- The **full pipeline now runs end-to-end** and regenerates every computed
+  artefact: the trained model `.pkl`, model-comparison metrics, feature importance,
+  the EPD-benchmarked carbon tables, the Concrete Performance Passports
+  (CSV + JSON + one JSON per element), the OpenBIM/IDS artefacts, and all figures.
+  On the UCI strength dataset the best model reaches **R² ≈ 0.92** on a hold-out
+  split (XGBoost when available; otherwise ExtraTrees/RandomForest).
+- A **single unified Google Colab notebook**
+  (`notebooks/concrete_performance_passport_pipeline.ipynb`) runs the whole workflow,
+  **saves all artefacts to Google Drive**, and is **checkpointed** so it can resume
+  if the runtime disconnects.
+- **No metrics or passport records are fabricated**; provenance and evidence levels
+  (A–D) are recorded throughout.
 
-### Reproduce computed artefacts (offline, one command)
+### Reproduce computed artefacts
 ```bash
 pip install -r requirements.txt
-USE_CACHED_ONLY=1 python -m src.finalize_lightweight_outputs   # cached data only; no downloads, no SHAP, no CV
-USE_CACHED_ONLY=1 pytest -q                                    # offline sanity tests
+python -m src.pipeline      # full run (downloads public data, trains, builds passports)
+pytest -q                   # sanity tests
 ```
-> Do **not** run `python -m src.pipeline` in constrained/interactive environments;
-> use the lightweight finalizer (`src/finalize_lightweight_outputs.py`) instead.
+Offline / cached-only variant (no network):
+```bash
+USE_CACHED_ONLY=1 python -m src.finalize_lightweight_outputs
+USE_CACHED_ONLY=1 pytest -q
+```
 
 ### No-overclaim statement
 No new ML algorithm, no full digital twin, no official IFC property set, no
@@ -90,9 +97,7 @@ record:
 │   ├── processed/      # cleaned / feature-engineered tables
 │   └── external/       # carbon benchmarks, EPD-derived reference values
 ├── notebooks/
-│   ├── 01_literature_and_dataset_inventory.ipynb
-│   ├── 02_strength_model_and_passport_generation.ipynb
-│   └── 03_carbon_and_openbim_mapping.ipynb
+│   └── concrete_performance_passport_pipeline.ipynb   # unified, Drive-backed, checkpointed
 ├── src/
 │   ├── config.py             # paths, dataset registry, seeds
 │   ├── data_download.py       # public dataset downloads with fallbacks
@@ -131,21 +136,36 @@ record:
 
 ## 4. How to run
 
-### Google Colab (primary path)
-Open the notebooks in order. Each notebook installs its own dependencies,
-downloads/loads data, runs end-to-end, and writes artefacts to `outputs/`.
+### Google Colab (primary path) — one unified notebook
+Open **`notebooks/concrete_performance_passport_pipeline.ipynb`** in Colab and run
+the cells top to bottom. The notebook:
 
-1. `notebooks/01_literature_and_dataset_inventory.ipynb`
-2. `notebooks/02_strength_model_and_passport_generation.ipynb`
-3. `notebooks/03_carbon_and_openbim_mapping.ipynb`
+1. **Mounts Google Drive** and creates a project folder
+   (`MyDrive/ConcretePerformancePassport/` by default) that holds **all** `data/`
+   and `outputs/`.
+2. Clones the code, installs dependencies, and points the project root at Drive.
+3. Runs every phase — data → strength model → explainability → carbon →
+   passports → OpenBIM/IDS → figures — with a **checkpoint per phase**.
+4. Verifies all artefacts and previews the key figures inline.
+
+**Resume after a disconnect:** just re-run the notebook from the top. Each phase
+checks a checkpoint file (`_checkpoints.json`) and the presence of its outputs on
+Drive, and **skips work that is already complete**, so training continues where it
+stopped. Use the reset helpers near the bottom to force a phase (or everything) to
+re-run.
+
+> Editable settings live in the second code cell: `PROJECT_NAME`, `REPO_BRANCH`,
+> `N_PASSPORTS`, `USE_SHAP`, `FORCE_OFFLINE`.
 
 ### Local
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python -m src.config            # create output dirs
-python -m src.data_download     # fetch public datasets
+python -m src.pipeline          # full end-to-end run -> outputs/
+# or run phase by phase:
+python -m src.data_download
 python -m src.train_strength_model
+python -m src.train_carbon_model
 python -m src.generate_passports
 python -m src.ifc_mapping
 ```

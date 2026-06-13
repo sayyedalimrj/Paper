@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CONCEPTUAL IDS (buildingSMART Information Delivery Specification style).
+     Illustrative, not a certified/validated IDS file. Demonstrates how Concrete
+     Performance Passport requirements can be expressed for automatic checking. -->
+<ids xmlns="http://standards.buildingsmart.org/IDS"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <info>
+    <title>Concrete Performance Passport - Information Delivery Specification</title>
+    <description>Machine-checkable information requirements for concrete element performance passports.</description>
+    <author>generated@concrete-performance-passport</author>
+    <version>1.0</version>
+  </info>
+  <specifications>
+    <specification name="Concrete material assigned" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-01" minOccurs="1">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>IfcMaterial</simpleValue></propertySet>
+          <baseName><simpleValue>Name</simpleValue></baseName>
+          <!-- expected: non-empty string (concrete class, e.g. C30/37) ; rationale: Every concrete element must declare its material/class -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Specified compressive strength present" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-02" minOccurs="1">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_MaterialConcrete</simpleValue></propertySet>
+          <baseName><simpleValue>CompressiveStrength</simpleValue></baseName>
+          <!-- expected: &gt;0 Pa ; rationale: Required strength must be available to evaluate QA -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Mix constituents declared" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-03" minOccurs="0">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>IfcMaterialConstituent (Cement, Water, SCM, Aggregate)</simpleValue></baseName>
+          <!-- expected: constituents present ; rationale: Supports sustainability + traceability -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Predicted strength present" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-04" minOccurs="1">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>PredictedCompressiveStrength</simpleValue></baseName>
+          <!-- expected: &gt;0 Pa ; rationale: Core ML output of the passport -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Risk class declared" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-05" minOccurs="1">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>RiskClass</simpleValue></baseName>
+          <!-- expected: enum {Low,Medium,High} ; rationale: Drives prioritisation/decision -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="QA/QC decision declared" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-06" minOccurs="1">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>QADecision</simpleValue></baseName>
+          <!-- expected: enum {Accept,Review,Hold/Retest,Missing/Insufficient} ; rationale: The actionable QA outcome -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Prediction uncertainty present" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-07" minOccurs="0">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>PredictionUncertainty</simpleValue></baseName>
+          <!-- expected: &gt;=0 Pa ; rationale: Quantifies confidence -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Carbon class declared" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-08" minOccurs="0">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>CarbonClass</simpleValue></baseName>
+          <!-- expected: enum {Low,Typical,High} ; rationale: Sustainability decision support -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Embodied carbon value present" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-09" minOccurs="0">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>GWP_A1A3</simpleValue></baseName>
+          <!-- expected: &gt;0 kgCO2e/m3 ; rationale: Enables benchmarking -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Model reference present" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-10" minOccurs="0">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>ModelReference</simpleValue></baseName>
+          <!-- expected: non-empty string ; rationale: Traceability/auditability of the prediction -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Evidence level declared" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-11" minOccurs="1">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>EvidenceLevel</simpleValue></baseName>
+          <!-- expected: enum {A,B,C,D} ; rationale: Records the evidence basis (measured/public/ML/illustrative) for auditability -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Prediction interval / uncertainty present" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-12" minOccurs="0">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>PredictionInterval</simpleValue></baseName>
+          <!-- expected: two bounds in Pa (approx) ; rationale: Communicates confidence around the prediction -->
+        </property>
+      </requirements>
+    </specification>
+    <specification name="Passport readiness score present" ifcVersion="IFC4X3"
+                   identifier="IDS-CPP-13" minOccurs="0">
+      <applicability>
+        <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_ConcretePerformancePassport</simpleValue></propertySet>
+          <baseName><simpleValue>ReadinessScore</simpleValue></baseName>
+          <!-- expected: 0-100 ; rationale: Quantifies completeness/decision-readiness of the record -->
+        </property>
+      </requirements>
+    </specification>
+  </specifications>
+</ids>
