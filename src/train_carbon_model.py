@@ -81,42 +81,87 @@ def estimate_gwp_from_mix(mix: Dict[str, float]) -> float:
 
 
 # -----------------------------------------------------------------------------
-# EPD dataset loading (cached -> download -> synthetic fallback)
+# EPD dataset loading  (LOCAL FILE ONLY — online Mendeley download is bypassed)
 # -----------------------------------------------------------------------------
-def load_epd() -> Tuple[Optional[pd.DataFrame], str]:
-    """Return (clean EPD df with strength_psi + gwp, source_note)."""
-    cache = config.EXTERNAL_DIR / "concrete_epd_raw.csv"
-    cols = {
-        "Concrete Compressive Strength (psi)": "strength_psi",
-        "A1-A3 Global Warming Potential (kg CO2-eq)": "gwp_kgco2e_per_m3",
-        "Concrete Curation Time": "curation_time",
-        "U.S. Region of Plant": "region",
-        "Declared Unit": "declared_unit",
-    }
-    df = None
-    if cache.exists():
-        try:
-            df = pd.read_csv(cache, usecols=lambda c: c in cols, low_memory=False)
-            note = "cached EPD CSV (data/external/concrete_epd_raw.csv)"
-        except Exception as e:  # noqa: BLE001
-            LOG.warning("Failed reading cached EPD: %s", e); df = None
-    if df is None:
-        import os
-        if os.environ.get("USE_CACHED_ONLY", "0") == "1":
-            LOG.warning("USE_CACHED_ONLY=1 and no cached EPD CSV — using synthetic fallback (no download).")
-            df, note = _synthetic_epd(), "SYNTHETIC fallback (offline; no cached EPD)"
-        else:
-            df = _download_epd(cache, cols)
-            if df is not None:
-                note = "downloaded EPD CSV (Mendeley r4jgxk2mhn)"
-            else:
-                LOG.warning("EPD download failed after retries -> synthetic fallback.")
-                df, note = _synthetic_epd(), "SYNTHETIC fallback (download unavailable)"
-    df = df.rename(columns=cols)
-    df["strength_psi"] = pd.to_numeric(df["strength_psi"], errors="coerce")
-    df["gwp_kgco2e_per_m3"] = pd.to_numeric(df["gwp_kgco2e_per_m3"], errors="coerce")
+# Canonical EPD column headers (present in both the CSV and the XLSX release of
+# the public compiled EPD dataset, Broyles et al., 2024).
+EPD_COLS = {
+    "Concrete Compressive Strength (psi)": "strength_psi",
+    "A1-A3 Global Warming Potential (kg CO2-eq)": "gwp_kgco2e_per_m3",
+    "Concrete Curation Time": "curation_time",
+    "U.S. Region of Plant": "region",
+    "Declared Unit": "declared_unit",
+}
+EPD_FILENAME_HINTS = ("concrete_epd", "compiled_concrete_epd")
+EPD_REQUIRED_HEADERS = (
+    "Concrete Compressive Strength (psi)",
+    "A1-A3 Global Warming Potential (kg CO2-eq)",
+)
+
+
+def _read_tabular(path: Path, **kwargs) -> pd.DataFrame:
+    """Read a .csv or .xlsx/.xls file into a DataFrame (XLSX needs openpyxl)."""
+    if path.suffix.lower() in (".xlsx", ".xls"):
+        return pd.read_excel(path, **{k: v for k, v in kwargs.items() if k != "low_memory"})
+    return pd.read_csv(path, **kwargs)
+
+
+def _looks_like_epd(path: Path) -> bool:
+    """True if the file is the EPD dataset (by filename hint or header columns)."""
+    if path.suffix.lower() not in (".csv", ".xlsx", ".xls"):
+        return False
+    if any(h in path.name.lower() for h in EPD_FILENAME_HINTS):
+        return True
+    try:
+        head = _read_tabular(path, nrows=0)
+        cols = set(map(str, head.columns))
+        return all(h in cols for h in EPD_REQUIRED_HEADERS)
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _find_local_epd() -> Optional[Path]:
+    """Locate a local EPD data file (CSV or XLSX). NO network access.
+
+    Search order:
+      1. ``CPP_EPD_PATH`` environment variable (explicit full path).
+      2. The project data directory (``config.DATA_DIR`` — e.g. on Google Drive).
+      3. The source repository's own ``data/`` directory (where the file may be
+         committed), independent of any ``CPP_PROJECT_ROOT`` override.
+    Files whose name matches the known EPD dataset are preferred; otherwise a
+    file is accepted only if its header contains the required EPD columns.
+    """
+    import os
+
+    env = os.environ.get("CPP_EPD_PATH")
+    if env and Path(env).exists():
+        return Path(env)
+    roots = [Path(config.DATA_DIR), Path(__file__).resolve().parents[1] / "data"]
+    seen, candidates = set(), []
+    for root in roots:
+        if not root.exists():
+            continue
+        for p in sorted(root.rglob("*")):
+            if not p.is_file() or p.suffix.lower() not in (".csv", ".xlsx", ".xls"):
+                continue
+            rp = p.resolve()
+            if rp in seen:
+                continue
+            seen.add(rp)
+            candidates.append(p)
+    hinted = [p for p in candidates if any(h in p.name.lower() for h in EPD_FILENAME_HINTS)]
+    for p in hinted + [c for c in candidates if c not in hinted]:
+        if _looks_like_epd(p):
+            return p
+    return None
+
+
+def _finalize_epd(df: pd.DataFrame, note: str) -> Tuple[pd.DataFrame, str]:
+    """Normalise columns, coerce numerics, drop implausible rows, bin by class."""
+    df = df.rename(columns=EPD_COLS)
+    df["strength_psi"] = pd.to_numeric(df.get("strength_psi"), errors="coerce")
+    df["gwp_kgco2e_per_m3"] = pd.to_numeric(df.get("gwp_kgco2e_per_m3"), errors="coerce")
     df = df.dropna(subset=["strength_psi", "gwp_kgco2e_per_m3"])
-    # Keep physically plausible rows.
     df = df[(df["strength_psi"].between(500, 20000)) &
             (df["gwp_kgco2e_per_m3"].between(50, 1500))]
     df["strength_class_psi"] = pd.cut(df["strength_psi"], bins=PSI_BINS, labels=PSI_LABELS, right=False)
@@ -124,107 +169,64 @@ def load_epd() -> Tuple[Optional[pd.DataFrame], str]:
     return df, note
 
 
-MENDELEY_DATASET = "r4jgxk2mhn"
-_HTTP_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (concrete-performance-passport research script)",
-    "Accept": "application/json, text/csv, */*",
-}
+def load_epd() -> Tuple[Optional[pd.DataFrame], str]:
+    """Load the REAL EPD dataset from a LOCAL file (CSV or XLSX).
 
+    The online Mendeley API download is intentionally bypassed (it returns HTTP
+    403 from some networks). The pipeline reads the dataset the user placed under
+    ``data/`` instead, and caches a slim parsed CSV for fast subsequent runs.
 
-def _get_with_retries(url, *, headers=None, timeout=60, retries=4, stream=False):
-    """HTTP GET with exponential backoff. Returns a ``requests.Response`` or None."""
-    import time as _time
-
-    import requests
-
-    last_exc = None
-    for attempt in range(1, retries + 1):
-        try:
-            resp = requests.get(url, headers=headers or _HTTP_HEADERS,
-                                timeout=timeout, stream=stream)
-            if resp.status_code == 200:
-                return resp
-            LOG.warning("GET %s -> HTTP %s (attempt %d/%d)", url, resp.status_code, attempt, retries)
-        except Exception as exc:  # noqa: BLE001
-            last_exc = exc
-            LOG.warning("GET %s failed (%s) (attempt %d/%d)", url, type(exc).__name__, attempt, retries)
-        if attempt < retries:
-            _time.sleep(min(2 ** attempt, 20))  # 2,4,8,... capped
-    if last_exc is not None:
-        LOG.warning("All %d attempts failed for %s: %s", retries, url, last_exc)
-    return None
-
-
-def _mendeley_csv_url() -> Optional[Tuple[str, float]]:
-    """Resolve the EPD CSV download URL via the Mendeley public API.
-
-    Tries dataset versions 3 -> 2 -> 1. Validates that responses are JSON before
-    parsing (a non-JSON body is what caused the earlier ``Expecting value`` error).
-    Returns (download_url, size_bytes) or None.
+    The synthetic stand-in is used ONLY when explicitly permitted
+    (``ALLOW_SYNTHETIC_EPD=1`` or ``USE_CACHED_ONLY=1`` for offline tests);
+    otherwise a missing dataset raises rather than being silently replaced.
     """
-    for version in (3, 2, 1):
-        api = (f"https://data.mendeley.com/public-api/datasets/"
-               f"{MENDELEY_DATASET}/files?folder_id=root&version={version}")
-        resp = _get_with_retries(api, timeout=60)
-        if resp is None:
-            continue
-        ctype = resp.headers.get("content-type", "")
-        if "json" not in ctype.lower():
-            LOG.warning("Mendeley API (v%d) returned non-JSON (%s); first 80 chars: %r",
-                        version, ctype, resp.text[:80])
-            continue
+    import os
+
+    cache = config.EXTERNAL_DIR / "concrete_epd_raw.csv"
+
+    # 1) Fast path: a previously-parsed slim CSV cache (real data only).
+    if cache.exists():
         try:
-            files = resp.json()
-            csv = next(f for f in files if str(f.get("filename", "")).lower().endswith(".csv"))
-            dl = csv["content_details"]["download_url"]
-            size = float(csv.get("size", 0) or 0)
-            LOG.info("Resolved EPD CSV (v%d): %s (~%.0f MB)", version, csv["filename"], size / 1e6)
-            return dl, size
-        except Exception as exc:  # noqa: BLE001
-            LOG.warning("Could not parse Mendeley file list (v%d): %s", version, exc)
-            continue
-    return None
+            df = pd.read_csv(cache, usecols=lambda c: c in EPD_COLS, low_memory=False)
+            if len(df) > 0:
+                return _finalize_epd(df, f"cached EPD CSV ({cache})")
+        except Exception as e:  # noqa: BLE001
+            LOG.warning("Failed reading cached EPD CSV (%s); will re-read the source file.", e)
+
+    # 2) Local source file (CSV or XLSX) — NO network.
+    src = _find_local_epd()
+    if src is not None:
+        LOG.info("Reading local EPD dataset: %s", src)
+        raw = _read_tabular(src, low_memory=False)
+        keep = [c for c in raw.columns if c in EPD_COLS]
+        df = raw[keep].copy()
+        # Cache a slim CSV so later runs (and Drive checkpoint reuse) are fast.
+        try:
+            config.EXTERNAL_DIR.mkdir(parents=True, exist_ok=True)
+            df.to_csv(cache, index=False)
+            LOG.info("Cached slim EPD CSV -> %s", cache)
+        except Exception as e:  # noqa: BLE001
+            LOG.warning("Could not write EPD CSV cache: %s", e)
+        return _finalize_epd(df, f"local EPD file ({src.name})")
+
+    # 3) Synthetic stand-in ONLY when explicitly permitted.
+    if os.environ.get("ALLOW_SYNTHETIC_EPD", "0") == "1" or os.environ.get("USE_CACHED_ONLY", "0") == "1":
+        LOG.warning("No local EPD file found; using SYNTHETIC stand-in "
+                    "(ALLOW_SYNTHETIC_EPD/USE_CACHED_ONLY is set).")
+        return _finalize_epd(_synthetic_epd(), "SYNTHETIC fallback (explicitly enabled)")
+
+    raise FileNotFoundError(
+        "Real EPD dataset not found and the online download is disabled. Place the "
+        "EPD file (CSV or XLSX, e.g. 'Compiled_Concrete_EPD_Data_Version_3_May_1_2024.xlsx') "
+        "anywhere under the project 'data/' directory, or set CPP_EPD_PATH to its full "
+        "path. To intentionally use a synthetic stand-in, set ALLOW_SYNTHETIC_EPD=1."
+    )
 
 
-def _download_epd(cache: Path, cols: dict) -> Optional[pd.DataFrame]:
-    """Download + validate the real EPD CSV. Returns a DataFrame or None.
-
-    The cache file is only written once the bytes are confirmed to parse as a CSV
-    containing the expected columns, so a truncated/HTML error response can never
-    masquerade as the dataset on a later cached run.
-    """
-    resolved = _mendeley_csv_url()
-    if resolved is None:
-        return None
-    dl, size = resolved
-    LOG.info("Downloading EPD CSV (~%.0f MB) ...", size / 1e6)
-    resp = _get_with_retries(dl, timeout=600, retries=3, stream=True)
-    if resp is None:
-        return None
-    try:
-        raw = resp.content
-    except Exception as exc:  # noqa: BLE001
-        LOG.warning("Failed reading EPD response body: %s", exc)
-        return None
-    # Sanity: a real CSV is multi-MB; an HTML/error page is tiny.
-    if len(raw) < 100_000:
-        LOG.warning("EPD download too small (%d bytes) — likely an error page, not the CSV.", len(raw))
-        return None
-    tmp = cache.with_suffix(".tmp")
-    tmp.write_bytes(raw)
-    try:
-        df = pd.read_csv(tmp, usecols=lambda c: c in cols, low_memory=False)
-        if "Concrete Compressive Strength (psi)" not in df.columns:
-            LOG.warning("Downloaded EPD CSV missing expected columns; discarding.")
-            tmp.unlink(missing_ok=True)
-            return None
-    except Exception as exc:  # noqa: BLE001
-        LOG.warning("Downloaded EPD bytes did not parse as CSV (%s); discarding.", exc)
-        tmp.unlink(missing_ok=True)
-        return None
-    tmp.replace(cache)  # atomically promote validated file to the real cache path
-    LOG.info("Cached validated EPD CSV -> %s (%d bytes)", cache, cache.stat().st_size)
-    return df
+# NOTE: The online Mendeley API download helpers were intentionally removed.
+# The EPD dataset is now read exclusively from a LOCAL file via load_epd() /
+# _find_local_epd() above. This avoids the intermittent HTTP 403 from the
+# Mendeley public API and guarantees the real, user-provided dataset is used.
 
 
 def _synthetic_epd(n: int = 2000) -> pd.DataFrame:
