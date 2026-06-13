@@ -106,20 +106,11 @@ def load_epd() -> Tuple[Optional[pd.DataFrame], str]:
             LOG.warning("USE_CACHED_ONLY=1 and no cached EPD CSV — using synthetic fallback (no download).")
             df, note = _synthetic_epd(), "SYNTHETIC fallback (offline; no cached EPD)"
         else:
-            try:
-                import requests
-                api = ("https://data.mendeley.com/public-api/datasets/"
-                       "r4jgxk2mhn/files?folder_id=root&version=3")
-                files = requests.get(api, timeout=60).json()
-                csv = next(f for f in files if f["filename"].lower().endswith(".csv"))
-                dl = csv["content_details"]["download_url"]
-                LOG.info("Downloading EPD CSV (~%.0f MB) ...", csv["size"] / 1e6)
-                raw = requests.get(dl, timeout=600).content
-                cache.write_bytes(raw)
-                df = pd.read_csv(cache, usecols=lambda c: c in cols, low_memory=False)
-                note = "downloaded EPD CSV (Mendeley r4jgxk2mhn v3)"
-            except Exception as e:  # noqa: BLE001
-                LOG.warning("EPD download failed (%s) -> synthetic fallback.", e)
+            df = _download_epd(cache, cols)
+            if df is not None:
+                note = "downloaded EPD CSV (Mendeley r4jgxk2mhn)"
+            else:
+                LOG.warning("EPD download failed after retries -> synthetic fallback.")
                 df, note = _synthetic_epd(), "SYNTHETIC fallback (download unavailable)"
     df = df.rename(columns=cols)
     df["strength_psi"] = pd.to_numeric(df["strength_psi"], errors="coerce")
@@ -131,6 +122,109 @@ def load_epd() -> Tuple[Optional[pd.DataFrame], str]:
     df["strength_class_psi"] = pd.cut(df["strength_psi"], bins=PSI_BINS, labels=PSI_LABELS, right=False)
     LOG.info("EPD usable rows: %d (%s)", len(df), note)
     return df, note
+
+
+MENDELEY_DATASET = "r4jgxk2mhn"
+_HTTP_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (concrete-performance-passport research script)",
+    "Accept": "application/json, text/csv, */*",
+}
+
+
+def _get_with_retries(url, *, headers=None, timeout=60, retries=4, stream=False):
+    """HTTP GET with exponential backoff. Returns a ``requests.Response`` or None."""
+    import time as _time
+
+    import requests
+
+    last_exc = None
+    for attempt in range(1, retries + 1):
+        try:
+            resp = requests.get(url, headers=headers or _HTTP_HEADERS,
+                                timeout=timeout, stream=stream)
+            if resp.status_code == 200:
+                return resp
+            LOG.warning("GET %s -> HTTP %s (attempt %d/%d)", url, resp.status_code, attempt, retries)
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            LOG.warning("GET %s failed (%s) (attempt %d/%d)", url, type(exc).__name__, attempt, retries)
+        if attempt < retries:
+            _time.sleep(min(2 ** attempt, 20))  # 2,4,8,... capped
+    if last_exc is not None:
+        LOG.warning("All %d attempts failed for %s: %s", retries, url, last_exc)
+    return None
+
+
+def _mendeley_csv_url() -> Optional[Tuple[str, float]]:
+    """Resolve the EPD CSV download URL via the Mendeley public API.
+
+    Tries dataset versions 3 -> 2 -> 1. Validates that responses are JSON before
+    parsing (a non-JSON body is what caused the earlier ``Expecting value`` error).
+    Returns (download_url, size_bytes) or None.
+    """
+    for version in (3, 2, 1):
+        api = (f"https://data.mendeley.com/public-api/datasets/"
+               f"{MENDELEY_DATASET}/files?folder_id=root&version={version}")
+        resp = _get_with_retries(api, timeout=60)
+        if resp is None:
+            continue
+        ctype = resp.headers.get("content-type", "")
+        if "json" not in ctype.lower():
+            LOG.warning("Mendeley API (v%d) returned non-JSON (%s); first 80 chars: %r",
+                        version, ctype, resp.text[:80])
+            continue
+        try:
+            files = resp.json()
+            csv = next(f for f in files if str(f.get("filename", "")).lower().endswith(".csv"))
+            dl = csv["content_details"]["download_url"]
+            size = float(csv.get("size", 0) or 0)
+            LOG.info("Resolved EPD CSV (v%d): %s (~%.0f MB)", version, csv["filename"], size / 1e6)
+            return dl, size
+        except Exception as exc:  # noqa: BLE001
+            LOG.warning("Could not parse Mendeley file list (v%d): %s", version, exc)
+            continue
+    return None
+
+
+def _download_epd(cache: Path, cols: dict) -> Optional[pd.DataFrame]:
+    """Download + validate the real EPD CSV. Returns a DataFrame or None.
+
+    The cache file is only written once the bytes are confirmed to parse as a CSV
+    containing the expected columns, so a truncated/HTML error response can never
+    masquerade as the dataset on a later cached run.
+    """
+    resolved = _mendeley_csv_url()
+    if resolved is None:
+        return None
+    dl, size = resolved
+    LOG.info("Downloading EPD CSV (~%.0f MB) ...", size / 1e6)
+    resp = _get_with_retries(dl, timeout=600, retries=3, stream=True)
+    if resp is None:
+        return None
+    try:
+        raw = resp.content
+    except Exception as exc:  # noqa: BLE001
+        LOG.warning("Failed reading EPD response body: %s", exc)
+        return None
+    # Sanity: a real CSV is multi-MB; an HTML/error page is tiny.
+    if len(raw) < 100_000:
+        LOG.warning("EPD download too small (%d bytes) — likely an error page, not the CSV.", len(raw))
+        return None
+    tmp = cache.with_suffix(".tmp")
+    tmp.write_bytes(raw)
+    try:
+        df = pd.read_csv(tmp, usecols=lambda c: c in cols, low_memory=False)
+        if "Concrete Compressive Strength (psi)" not in df.columns:
+            LOG.warning("Downloaded EPD CSV missing expected columns; discarding.")
+            tmp.unlink(missing_ok=True)
+            return None
+    except Exception as exc:  # noqa: BLE001
+        LOG.warning("Downloaded EPD bytes did not parse as CSV (%s); discarding.", exc)
+        tmp.unlink(missing_ok=True)
+        return None
+    tmp.replace(cache)  # atomically promote validated file to the real cache path
+    LOG.info("Cached validated EPD CSV -> %s (%d bytes)", cache, cache.stat().st_size)
+    return df
 
 
 def _synthetic_epd(n: int = 2000) -> pd.DataFrame:
